@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creative Writing Task</title>
+    <title>Psychology Experiment Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,99 +12,184 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Simple animation for generated ideas */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Custom scrollbar for chat */
+        #chat-history::-webkit-scrollbar {
+            width: 6px;
         }
-        .fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
+        #chat-history::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        #chat-history::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        #chat-history::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100 text-gray-800">
 
-    <div class="w-full max-w-2xl bg-white rounded-xl shadow-lg p-6 md:p-8 border border-gray-200">
-        
-        <!-- Header Section -->
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-900">Creative Writing Task</h1>
-            <p id="instructions" class="mt-2 text-gray-600">We would like you to write a story about <span class="font-semibold text-indigo-600">...</span>. The story must be exactly <strong>eight sentences</strong> long and appropriate for a teenage and young adult audience.</p>
-        </div>
+    <div class="flex flex-col md:flex-row w-full h-screen">
 
-        <!-- Idea Generation Section -->
-        <div class="mb-6">
-            <div class="flex justify-center">
-                <button id="generate-idea-btn" class="bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed">
-                    Generate Story Idea...
+        <!-- Left Panel: Divergent Thinking Task -->
+        <div class="w-full md:w-1/3 bg-white p-6 md:p-8 flex flex-col border-r border-gray-200">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">Divergent Thinking Task</h1>
+                <p class="mt-2 text-gray-600">Please name as many different uses for a <strong>brick</strong> as you can think of. Submit each idea one at a time.</p>
+            </div>
+            
+            <form id="word-form" class="flex items-center gap-2 mb-4">
+                <input type="text" id="word-input" class="flex-grow p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter a single use...">
+                <button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-shadow shadow-sm">
+                    Submit
                 </button>
-            </div>
-            <div id="idea-container" class="mt-4 space-y-3">
-                <!-- Generated ideas will be appended here -->
+            </form>
+
+            <div class="flex-grow overflow-y-auto border-t border-gray-200 pt-4">
+                <h2 class="text-lg font-semibold mb-2">Your Submitted Ideas:</h2>
+                <ul id="word-list" class="list-disc list-inside space-y-1 text-gray-700">
+                    <!-- Submitted words will be listed here -->
+                </ul>
             </div>
         </div>
 
-        <!-- Story Writing Section -->
-        <div>
-            <label for="story-textarea" class="block text-sm font-medium text-gray-700 mb-1">Your Story</label>
-            <textarea id="story-textarea" rows="10" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Start writing your 8-sentence story here..."></textarea>
-            <div class="flex justify-between items-center mt-2 text-sm">
-                <p id="sentence-count" class="text-gray-500">Sentence count: 0 / 8</p>
-                <p id="message-box" class="font-medium"></p>
+        <!-- Right Panel: AI Chat -->
+        <div class="w-full md:w-2/3 bg-gray-50 flex flex-col h-full p-6">
+            <h1 class="text-2xl font-bold text-gray-900 mb-4 text-center md:text-left">AI Chat Assistant</h1>
+            <div id="chat-history" class="flex-grow bg-white border border-gray-200 rounded-lg p-4 overflow-y-auto mb-4 space-y-4">
+                <!-- Chat messages will appear here -->
+                <div class="p-3 bg-indigo-100 text-indigo-800 rounded-lg max-w-lg">
+                    <p class="font-bold text-sm">AI Assistant</p>
+                    <p>Hello! How can I help you today?</p>
+                </div>
             </div>
-        </div>
-
-        <!-- Submission Button -->
-        <div class="mt-6 text-center">
-            <button id="submit-btn" class="bg-green-600 text-white font-bold py-2.5 px-8 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 shadow-sm">
-                Submit Story
-            </button>
+            <form id="chat-form" class="flex items-center gap-2">
+                <input type="text" id="chat-input" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Type your message to the AI...">
+                <button type="submit" id="chat-submit-btn" class="bg-green-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-shadow shadow-sm disabled:bg-gray-400">
+                    Send
+                </button>
+            </form>
         </div>
 
     </div>
 
     <script type="module">
-        // --- CONFIGURATION ---
-        const MAX_IDEAS = 5;
-        const REQUIRED_SENTENCES = 8;
-        const STORY_TOPICS = [
-            'an adventure on the open seas',
-            'an adventure in the jungle',
-            'an adventure on a different planet',
-            'a mystery in a small town',
-            'a magical discovery in an old library'
-        ];
+        // --- DIVERGENT TASK ELEMENTS ---
+        const wordForm = document.getElementById('word-form');
+        const wordInput = document.getElementById('word-input');
+        const wordList = document.getElementById('word-list');
 
-        // --- DOM ELEMENTS ---
-        const instructionsEl = document.getElementById('instructions');
-        const generateIdeaBtn = document.getElementById('generate-idea-btn');
-        const ideaContainer = document.getElementById('idea-container');
-        const storyTextarea = document.getElementById('story-textarea');
-        const sentenceCountEl = document.getElementById('sentence-count');
-        const messageBox = document.getElementById('message-box');
-        const submitBtn = document.getElementById('submit-btn');
+        // --- CHAT ELEMENTS ---
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatHistoryEl = document.getElementById('chat-history');
+        const chatSubmitBtn = document.getElementById('chat-submit-btn');
 
         // --- STATE ---
-        let ideaCount = 0;
-        let currentTopic = '';
+        const submittedWords = [];
+        const chatHistory = []; // To store the conversation for context
 
         // --- GEMINI API SETUP ---
         const apiKey = ""; // Canvas will provide the key at runtime
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
+        // --- DIVERGENT TASK LOGIC ---
+        wordForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const word = wordInput.value.trim();
+            if (word) {
+                submittedWords.push(word);
+                renderWordList();
+                wordInput.value = '';
+            }
+        });
+
+        function renderWordList() {
+            wordList.innerHTML = ''; // Clear the list
+            submittedWords.forEach(word => {
+                const li = document.createElement('li');
+                li.textContent = word;
+                wordList.appendChild(li);
+            });
+        }
+
+        // --- CHAT LOGIC ---
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            // Add user message to UI and history
+            addMessageToUI('You', userMessage, 'user');
+            chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+            chatInput.value = '';
+            
+            // Disable form and show typing indicator
+            chatSubmitBtn.disabled = true;
+            chatInput.disabled = true;
+            addMessageToUI('AI Assistant', '...', 'model', true); // Typing indicator
+
+            // Get AI response
+            const aiResponse = await getAIChatResponse();
+
+            // Remove typing indicator and add final AI response
+            chatHistoryEl.removeChild(chatHistoryEl.lastChild); // remove the "..."
+            addMessageToUI('AI Assistant', aiResponse, 'model');
+            chatHistory.push({ role: 'model', parts: [{ text: aiResponse }] });
+            
+            // Re-enable form
+            chatSubmitBtn.disabled = false;
+            chatInput.disabled = false;
+            chatInput.focus();
+        });
+
         /**
-         * Fetches a story idea from the Gemini API with exponential backoff for retries.
-         * @param {string} topic - The story topic for the prompt.
-         * @returns {Promise<string>} - The generated story idea text.
+         * Adds a message to the chat window UI.
+         * @param {string} sender - 'You' or 'AI Assistant'.
+         * @param {string} message - The message content.
+         * @param {string} role - 'user' or 'model'.
+         * @param {boolean} isTyping - If true, displays a simple typing indicator.
          */
-        async function getAIStoryIdea(topic) {
-            const prompt = `Write a three-sentence summary of a story about ${topic}.`;
+        function addMessageToUI(sender, message, role, isTyping = false) {
+            const messageContainer = document.createElement('div');
+            const senderEl = document.createElement('p');
+            const messageEl = document.createElement('p');
+
+            senderEl.className = 'font-bold text-sm';
+            senderEl.textContent = sender;
+            messageEl.textContent = message;
+
+            if (role === 'user') {
+                messageContainer.className = 'p-3 bg-blue-100 text-blue-800 rounded-lg max-w-lg ml-auto';
+                senderEl.className += ' text-blue-900';
+            } else {
+                messageContainer.className = 'p-3 bg-indigo-100 text-indigo-800 rounded-lg max-w-lg';
+                senderEl.className += ' text-indigo-900';
+                 if (isTyping) {
+                    messageEl.innerHTML = '<span class="animate-pulse">Typing...</span>';
+                }
+            }
+            
+            messageContainer.appendChild(senderEl);
+            messageContainer.appendChild(messageEl);
+            chatHistoryEl.appendChild(messageContainer);
+            
+            // Scroll to the bottom
+            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+        }
+
+        /**
+         * Fetches a chat response from the Gemini API, providing conversation history.
+         * @returns {Promise<string>} - The generated chat response text.
+         */
+        async function getAIChatResponse() {
             const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
+                contents: chatHistory, // Send the entire conversation history
             };
 
-            let delay = 1000; // Start with 1 second
-            for (let i = 0; i < 5; i++) { // Retry up to 5 times
+            let delay = 1000;
+            for (let i = 0; i < 5; i++) {
                 try {
                     const response = await fetch(apiUrl, {
                         method: 'POST',
@@ -112,138 +197,28 @@
                         body: JSON.stringify(payload),
                     });
 
-                    if (!response.ok) {
-                        throw new Error(`API request failed with status ${response.status}`);
-                    }
-
+                    if (!response.ok) throw new Error(`API Error: ${response.status}`);
+                    
                     const result = await response.json();
                     const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
                     
                     if (text) {
                         return text.trim();
                     } else {
-                        throw new Error("Invalid response structure from API.");
+                        throw new Error("Invalid API response structure.");
                     }
                 } catch (error) {
                     console.error(`Attempt ${i + 1} failed:`, error);
-                    if (i < 4) { // Don't wait after the last attempt
+                    if (i < 4) {
                         await new Promise(resolve => setTimeout(resolve, delay));
-                        delay *= 2; // Double the delay for the next retry
+                        delay *= 2;
                     } else {
-                        return "Sorry, I couldn't generate an idea right now. Please try again later.";
+                        return "I'm having trouble connecting right now. Please try again in a moment.";
                     }
                 }
             }
         }
-
-        /**
-         * Handles the click event for the "Generate Story Idea" button.
-         */
-        async function handleGenerateIdea() {
-            if (ideaCount >= MAX_IDEAS) return;
-
-            generateIdeaBtn.disabled = true;
-            generateIdeaBtn.textContent = 'Generating...';
-
-            const ideaText = await getAIStoryIdea(currentTopic);
-            
-            ideaCount++;
-            displayGeneratedIdea(ideaText, ideaCount);
-
-            generateIdeaBtn.textContent = 'Generate Story Idea...';
-            if (ideaCount >= MAX_IDEAS) {
-                generateIdeaBtn.disabled = true;
-                generateIdeaBtn.textContent = `Max ${MAX_IDEAS} ideas reached`;
-            } else {
-                 generateIdeaBtn.disabled = false;
-            }
-        }
-
-        /**
-         * Creates and displays a new idea element in the UI.
-         * @param {string} text - The text of the idea.
-         * @param {number} count - The number of the idea (e.g., 1, 2, 3).
-         */
-        function displayGeneratedIdea(text, count) {
-            const ideaEl = document.createElement('div');
-            ideaEl.className = 'p-4 bg-gray-100 border border-gray-200 rounded-lg fade-in';
-            
-            const header = document.createElement('h3');
-            header.className = 'font-semibold text-sm text-gray-800 mb-1';
-            header.textContent = `Generated Idea ${count}`;
-            
-            const content = document.createElement('p');
-            content.className = 'text-gray-700';
-            content.textContent = text;
-            
-            ideaEl.appendChild(header);
-            ideaEl.appendChild(content);
-            ideaContainer.appendChild(ideaEl);
-        }
-        
-        /**
-         * Counts the number of sentences in the textarea and updates the UI.
-         */
-        function updateSentenceCount() {
-            const text = storyTextarea.value.trim();
-            if (text === '') {
-                sentenceCountEl.textContent = `Sentence count: 0 / ${REQUIRED_SENTENCES}`;
-                sentenceCountEl.classList.remove('text-red-500', 'text-green-600');
-                return 0;
-            }
-            // Split by sentence-ending punctuation. Handles multiple punctuation.
-            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-            const count = sentences.length;
-
-            sentenceCountEl.textContent = `Sentence count: ${count} / ${REQUIRED_SENTENCES}`;
-            
-            if (count === REQUIRED_SENTENCES) {
-                sentenceCountEl.classList.add('text-green-600');
-                sentenceCountEl.classList.remove('text-red-500');
-            } else {
-                sentenceCountEl.classList.add('text-red-500');
-                sentenceCountEl.classList.remove('text-green-600');
-            }
-            return count;
-        }
-
-        /**
-         * Handles the story submission logic.
-         */
-        function handleSubmit() {
-            const count = updateSentenceCount();
-            if (count === REQUIRED_SENTENCES) {
-                messageBox.textContent = "Success! Your story has been submitted.";
-                messageBox.className = 'font-medium text-green-600';
-                // In a real app, you would send the data to a server here.
-                // For this example, we'll just disable the inputs.
-                storyTextarea.disabled = true;
-                submitBtn.disabled = true;
-                generateIdeaBtn.disabled = true;
-            } else {
-                messageBox.textContent = `Your story must have exactly ${REQUIRED_SENTENCES} sentences.`;
-                messageBox.className = 'font-medium text-red-500';
-            }
-            // Clear the message after a few seconds
-            setTimeout(() => { messageBox.textContent = ''; }, 4000);
-        }
-
-        /**
-         * Initializes the application on page load.
-         */
-        function initialize() {
-            // Select and display a random topic
-            currentTopic = STORY_TOPICS[Math.floor(Math.random() * STORY_TOPICS.length)];
-            instructionsEl.querySelector('span').textContent = currentTopic;
-
-            // Attach event listeners
-            generateIdeaBtn.addEventListener('click', handleGenerateIdea);
-            storyTextarea.addEventListener('input', updateSentenceCount);
-            submitBtn.addEventListener('click', handleSubmit);
-        }
-
-        // --- START THE APP ---
-        initialize();
     </script>
 </body>
 </html>
+
