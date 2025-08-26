@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Psychology Experiment Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Added Markdown parser -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -26,6 +27,16 @@
         #chat-history::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+        /* Styles for rendered markdown content */
+        .chat-message-content ul, .chat-message-content ol {
+            padding-left: 1.25rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .chat-message-content ul { list-style-type: disc; }
+        .chat-message-content ol { list-style-type: decimal; }
+        .chat-message-content p { margin-bottom: 0.5rem; }
+        .chat-message-content p:last-child { margin-bottom: 0; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -61,11 +72,11 @@
                 <!-- Chat messages will appear here -->
                 <div class="p-3 bg-indigo-100 text-indigo-800 rounded-lg max-w-lg">
                     <p class="font-bold text-sm">AI Assistant</p>
-                    <p>Hi!</p>
+                    <p>Hello! How can I help you today?</p>
                 </div>
             </div>
             <form id="chat-form" class="flex items-center gap-2">
-                <input type="text" id="chat-input" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Type your message here...">
+                <input type="text" id="chat-input" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Type your message to the AI...">
                 <button type="submit" id="chat-submit-btn" class="bg-green-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-shadow shadow-sm disabled:bg-gray-400">
                     Send
                 </button>
@@ -91,8 +102,9 @@
         const chatHistory = []; // To store the conversation for context
 
         // --- GEMINI API SETUP ---
-        const apiKey = "AIzaSyDTPxBD2FyTSQFJo2KwepwrT-4K-hE7LHs"; // Canvas will provide the key at runtime
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const apiKey = ""; // Canvas will provide the key at runtime
+        // Switched to the streaming endpoint for faster perceived response
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?key=${apiKey}`;
 
         // --- DIVERGENT TASK LOGIC ---
         wordForm.addEventListener('submit', (e) => {
@@ -125,40 +137,41 @@
             chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
             chatInput.value = '';
             
-            // Disable form and show typing indicator
+            // Disable form
             chatSubmitBtn.disabled = true;
             chatInput.disabled = true;
-            addMessageToUI('AI Assistant', '...', 'model', true); // Typing indicator
 
-            // Get AI response
-            const aiResponse = await getAIChatResponse();
+            // Create a new message bubble for the AI that we can stream content into
+            const aiMessageContainer = createMessageBubble('AI Assistant', 'model');
+            const aiMessageContent = aiMessageContainer.querySelector('.chat-message-content');
+            aiMessageContent.innerHTML = '<span class="animate-pulse">...</span>'; // Initial typing indicator
 
-            // Remove typing indicator and add final AI response
-            chatHistoryEl.removeChild(chatHistoryEl.lastChild); // remove the "..."
-            addMessageToUI('AI Assistant', aiResponse, 'model');
-            chatHistory.push({ role: 'model', parts: [{ text: aiResponse }] });
+            // Stream AI response
+            const fullResponse = await streamAIChatResponse(aiMessageContent);
+            
+            // Once streaming is complete, add the full response to history
+            chatHistory.push({ role: 'model', parts: [{ text: fullResponse }] });
             
             // Re-enable form
             chatSubmitBtn.disabled = false;
             chatInput.disabled = false;
             chatInput.focus();
         });
-
+        
         /**
-         * Adds a message to the chat window UI.
+         * Creates a new message bubble and appends it to the chat history.
          * @param {string} sender - 'You' or 'AI Assistant'.
-         * @param {string} message - The message content.
          * @param {string} role - 'user' or 'model'.
-         * @param {boolean} isTyping - If true, displays a simple typing indicator.
+         * @returns {HTMLElement} - The created message container element.
          */
-        function addMessageToUI(sender, message, role, isTyping = false) {
+        function createMessageBubble(sender, role) {
             const messageContainer = document.createElement('div');
             const senderEl = document.createElement('p');
-            const messageEl = document.createElement('p');
+            const messageEl = document.createElement('div');
 
-            senderEl.className = 'font-bold text-sm';
+            senderEl.className = 'font-bold text-sm mb-1';
             senderEl.textContent = sender;
-            messageEl.textContent = message;
+            messageEl.className = 'chat-message-content';
 
             if (role === 'user') {
                 messageContainer.className = 'p-3 bg-blue-100 text-blue-800 rounded-lg max-w-lg ml-auto';
@@ -166,57 +179,80 @@
             } else {
                 messageContainer.className = 'p-3 bg-indigo-100 text-indigo-800 rounded-lg max-w-lg';
                 senderEl.className += ' text-indigo-900';
-                 if (isTyping) {
-                    messageEl.innerHTML = '<span class="animate-pulse">Typing...</span>';
-                }
             }
             
             messageContainer.appendChild(senderEl);
             messageContainer.appendChild(messageEl);
             chatHistoryEl.appendChild(messageContainer);
             
-            // Scroll to the bottom
             chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+            return messageContainer;
+        }
+
+
+        /**
+         * Adds a static message to the chat window UI. Used for user messages.
+         * @param {string} sender - 'You'.
+         * @param {string} message - The message content.
+         * @param {string} role - 'user'.
+         */
+        function addMessageToUI(sender, message, role) {
+            const bubble = createMessageBubble(sender, role);
+            const content = bubble.querySelector('.chat-message-content');
+            content.textContent = message;
         }
 
         /**
-         * Fetches a chat response from the Gemini API, providing conversation history.
-         * @returns {Promise<string>} - The generated chat response text.
+         * Fetches and streams a chat response from the Gemini API.
+         * @param {HTMLElement} targetElement - The element to stream the response into.
+         * @returns {Promise<string>} - A promise that resolves with the full response text.
          */
-        async function getAIChatResponse() {
-            const payload = {
-                contents: chatHistory, // Send the entire conversation history
-            };
+        async function streamAIChatResponse(targetElement) {
+            const payload = { contents: chatHistory };
+            let fullResponseText = '';
 
-            let delay = 1000;
-            for (let i = 0; i < 5; i++) {
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload),
-                    });
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
 
-                    if (!response.ok) throw new Error(`API Error: ${response.status}`);
-                    
-                    const result = await response.json();
-                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    
-                    if (text) {
-                        return text.trim();
-                    } else {
-                        throw new Error("Invalid API response structure.");
-                    }
-                } catch (error) {
-                    console.error(`Attempt ${i + 1} failed:`, error);
-                    if (i < 4) {
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        delay *= 2;
-                    } else {
-                        return "I'm having trouble connecting right now. Please try again in a moment.";
-                    }
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
                 }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const jsonStr = line.substring(6);
+                            try {
+                                const parsed = JSON.parse(jsonStr);
+                                const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                                fullResponseText += text;
+                            } catch (e) {
+                                // Ignore parsing errors for incomplete JSON chunks
+                            }
+                        }
+                    }
+                    // Update the UI with the accumulated text, parsed as markdown
+                    targetElement.innerHTML = marked.parse(fullResponseText);
+                    chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+                }
+            } catch (error) {
+                console.error("Streaming failed:", error);
+                targetElement.innerHTML = "Sorry, an error occurred. Please try again.";
             }
+            return fullResponseText;
         }
     </script>
 </body>
