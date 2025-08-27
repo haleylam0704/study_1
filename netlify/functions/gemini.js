@@ -1,14 +1,15 @@
-import fetch from 'node-fetch';
-
 // This is the final, corrected version of the secure "middleman" function.
 // It uses a ReadableStream to ensure full compatibility with Netlify's streaming response requirements.
+// **Crucially, it uses node-fetch v2 for stability.**
 
-export const handler = async (event) => {
+const fetch = require('node-fetch'); // <-- THE KEY CHANGE IS HERE
+
+exports.handler = async (event) => {
   // Get the secret API key from the environment variables you set in Netlify
   const apiKey = process.env.GEMINI_API_KEY;
-  
-  // The real Gemini API endpoint for streaming - CORRECTED URL
-  const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?key=${apiKey}`;
+
+  // The real Gemini API endpoint for streaming
+  const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:streamGenerateContent?key=${apiKey}&alt=sse`;
 
   try {
     // Forward the user's request (the chat history) to the real Gemini API
@@ -31,21 +32,14 @@ export const handler = async (event) => {
     }
 
     // Create a new ReadableStream to pipe the response through.
-    // This is the key change that makes it compatible with Netlify.
+    // This is the key that makes it compatible with Netlify.
     const readableStream = new ReadableStream({
       async start(controller) {
-        const reader = geminiResponse.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            controller.close();
-            break;
-          }
-          // Pass the raw chunk of data directly to the browser
-          controller.enqueue(value);
+        // Node-fetch's body is already a stream, so we can iterate it directly
+        for await (const chunk of geminiResponse.body) {
+          controller.enqueue(chunk);
         }
+        controller.close();
       },
     });
     
