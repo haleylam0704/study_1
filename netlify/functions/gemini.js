@@ -20,18 +20,27 @@ exports.handler = async (event) => {
       };
     }
 
-    // THIS IS THE KEY CHANGE:
-    // We return a simple object again, but with the addition of
-    // `isBase64Encoded: false`. This tells the underlying system
-    // (AWS Lambda) how to handle the body, which is a stream.
-    return {
-      statusCode: 200,
+    // THIS IS THE CRITICAL SECTION
+    // 1. `geminiResponse.body` is a Node.js-style stream.
+    // 2. We create a new, web-standard `ReadableStream`.
+    // 3. We pipe the data from the Node stream into our new standard stream.
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of geminiResponse.body) {
+          controller.enqueue(chunk);
+        }
+        controller.close();
+      },
+    });
+
+    // 4. We return a standard `Response` object containing our converted stream.
+    //    This is the format Netlify's runtime understands for streaming.
+    return new Response(readableStream, {
+      status: 200,
       headers: {
         'Content-Type': 'text/event-stream; charset=utf-8',
       },
-      body: geminiResponse.body,
-      isBase64Encoded: false, // <-- Add this line
-    };
+    });
 
   } catch (error) {
     console.error('Error in Netlify function:', error);
