@@ -1,4 +1,11 @@
 # netlify.toml
+
+# This block tells Netlify to treat 'gemini.js' as an Edge Function
+# and make it available at the URL /.netlify/functions/gemini
 [[edge_functions]]
   path = "/gemini"
   function = "gemini"
+
+# Make sure you have REMOVED the old block that looked like this:
+# [functions]
+#  directory = "netlify/functions"
