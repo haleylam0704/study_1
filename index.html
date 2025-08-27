@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Psychology Experiment Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Added Markdown parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -13,26 +13,11 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Custom scrollbar for chat */
-        #chat-history::-webkit-scrollbar {
-            width: 6px;
-        }
-        #chat-history::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        #chat-history::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-        #chat-history::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        /* Styles for rendered markdown content */
-        .chat-message-content ul, .chat-message-content ol {
-            padding-left: 1.25rem;
-            margin-top: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
+        #chat-history::-webkit-scrollbar { width: 6px; }
+        #chat-history::-webkit-scrollbar-track { background: #f1f5f9; }
+        #chat-history::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        #chat-history::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .chat-message-content ul, .chat-message-content ol { padding-left: 1.25rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
         .chat-message-content ul { list-style-type: disc; }
         .chat-message-content ol { list-style-type: decimal; }
         .chat-message-content p { margin-bottom: 0.5rem; }
@@ -41,9 +26,11 @@
 </head>
 <body class="bg-gray-100 text-gray-800">
 
+    <form name="experiment-data" netlify hidden>
+        <input type="hidden" name="participantData" />
+    </form>
     <div class="flex flex-col md:flex-row w-full h-screen">
 
-        <!-- Left Panel: Divergent Thinking Task -->
         <div class="w-full md:w-1/3 bg-white p-6 md:p-8 flex flex-col border-r border-gray-200">
             <div class="mb-6">
                 <h1 class="text-2xl font-bold text-gray-900">Divergent Thinking Task</h1>
@@ -58,23 +45,21 @@
             </form>
 
             <div class="flex-grow overflow-y-auto border-t border-gray-200 pt-4">
-    <h2 class="text-lg font-semibold mb-2">Your Submitted Ideas:</h2>
-    <ul id="word-list" class="list-disc list-inside space-y-1 text-gray-700">
-        </ul>
-</div>
+                <h2 class="text-lg font-semibold mb-2">Your Submitted Ideas:</h2>
+                <ul id="word-list" class="list-disc list-inside space-y-1 text-gray-700">
+                    </ul>
+            </div>
 
-<div class="mt-auto pt-4">
-    <button id="finish-btn" class="w-full bg-red-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-shadow shadow-sm disabled:bg-gray-400">
-        Finish Experiment & Submit Data
-    </button>
-</div>
+            <div class="mt-auto pt-4">
+                <button id="finish-btn" class="w-full bg-red-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-shadow shadow-sm disabled:bg-gray-400">
+                    Finish Experiment & Submit Data
+                </button>
+            </div>
         </div>
 
-        <!-- Right Panel: AI Chat -->
         <div class="w-full md:w-2/3 bg-gray-50 flex flex-col h-full p-6">
             <h1 class="text-2xl font-bold text-gray-900 mb-4 text-center md:text-left">AI Chat Assistant</h1>
             <div id="chat-history" class="flex-grow bg-white border border-gray-200 rounded-lg p-4 overflow-y-auto mb-4 space-y-4">
-                <!-- Chat messages will appear here -->
                 <div class="p-3 bg-indigo-100 text-indigo-800 rounded-lg max-w-lg">
                     <p class="font-bold text-sm">AI Assistant</p>
                     <p>Hello! How can I help you today?</p>
@@ -87,242 +72,221 @@
                 </button>
             </form>
         </div>
-
     </div>
 
     <script type="module">
-    // --- UI ELEMENTS ---
-    const wordForm = document.getElementById('word-form');
-    const wordInput = document.getElementById('word-input');
-    const wordList = document.getElementById('word-list');
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    const chatHistoryEl = document.getElementById('chat-history');
-    const chatSubmitBtn = document.getElementById('chat-submit-btn');
-    const finishBtn = document.getElementById('finish-btn'); // New button element
+        // --- UI ELEMENTS ---
+        const wordForm = document.getElementById('word-form');
+        const wordInput = document.getElementById('word-input');
+        const wordList = document.getElementById('word-list');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatHistoryEl = document.getElementById('chat-history');
+        const chatSubmitBtn = document.getElementById('chat-submit-btn');
+        const finishBtn = document.getElementById('finish-btn');
 
-    // --- STATE & DATA COLLECTION ---
-    let participantId = null;
-    let startTimestamp = null;
-    const submittedWords = [];
-    const chatHistory = []; 
+        // --- STATE & DATA COLLECTION ---
+        let participantId = null;
+        let startTimestamp = null;
+        const submittedWords = [];
+        const chatHistory = [];
 
-    // --- API SETUP ---
-    const apiUrl = `/gemini`; // Using the Edge Function path
+        // --- API SETUP ---
+        const apiUrl = `/gemini`;
 
-    // =================================================================
-    // NEW: INITIALIZE THE EXPERIMENT ON PAGE LOAD
-    // =================================================================
-    function initializeExperiment() {
-    // 1. Look for an ID in the URL.
-    const urlParams = new URLSearchParams(window.location.search);
-    const idFromQualtrics = urlParams.get('id'); // 'id' matches the "?id=" in the URL
+        // =================================================================
+        // INITIALIZE THE EXPERIMENT ON PAGE LOAD
+        // =================================================================
+        function initializeExperiment() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const idFromQualtrics = urlParams.get('id');
 
-    if (idFromQualtrics) {
-        // 2. If an ID from Qualtrics is found, use it.
-        participantId = idFromQualtrics;
-    } else {
-        // 3. If no ID is in the URL (e.g., for testing), create a random one.
-        console.warn("No Qualtrics ID found in URL. Generating a random ID for testing.");
-        participantId = `TEST_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    }
-    
-    // Record the start time
-    startTimestamp = new Date().toISOString();
-
-    // Log the final ID to the console for the researcher.
-    console.log(`Experiment Started. Participant ID: ${participantId}`);
-}
-
-
-    // =================================================================
-    // NEW: DATA SUBMISSION LOGIC
-    // =================================================================
-    function submitData() {
-        // 1. Package all the data into a single, structured object
-        const participantData = {
-            id: participantId,
-            startTimestamp: startTimestamp,
-            endTimestamp: new Date().toISOString(),
-            divergentTask: {
-                prompt: "brick", // It's good practice to record the prompt
-                responses: submittedWords
-            },
-            chatLog: chatHistory
-        };
-
-        // 2. Convert the object to a nicely formatted JSON string
-        const dataAsJson = JSON.stringify(participantData, null, 2);
-
-        // 3. Log the final data to the console
-        console.log("--- PARTICIPANT DATA START ---");
-        console.log(dataAsJson);
-        console.log("--- PARTICIPANT DATA END ---");
-        
-        // 4. Give feedback to the participant and researcher
-        alert("Data has been submitted to the console. Thank you for participating!");
-
-        // 5. Disable all inputs to prevent further data entry
-        wordInput.disabled = true;
-        wordForm.querySelector('button').disabled = true;
-        chatInput.disabled = true;
-        chatSubmitBtn.disabled = true;
-        finishBtn.disabled = true;
-        finishBtn.textContent = 'Data Submitted';
-    }
-
-
-    // --- DIVERGENT TASK LOGIC ---
-    wordForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const word = wordInput.value.trim();
-        if (word) {
-            submittedWords.push(word);
-            renderWordList();
-            wordInput.value = '';
-        }
-    });
-
-    function renderWordList() {
-        wordList.innerHTML = '';
-        submittedWords.forEach(word => {
-            const li = document.createElement('li');
-            li.textContent = word;
-            wordList.appendChild(li);
-        });
-    }
-
-    // --- CHAT LOGIC ---
-    chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userMessage = chatInput.value.trim();
-        if (!userMessage) return;
-
-        // Add user message to UI and history
-        addMessageToUI('You', userMessage, 'user');
-        chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
-        chatInput.value = '';
-        
-        // Disable form while waiting for response
-        chatSubmitBtn.disabled = true;
-        chatInput.disabled = true;
-
-        // Create a new message bubble for the AI
-        const aiMessageContainer = createMessageBubble('AI Assistant', 'model');
-        const aiMessageContent = aiMessageContainer.querySelector('.chat-message-content');
-        aiMessageContent.innerHTML = '<span class="animate-pulse">...</span>';
-
-        // Stream AI response
-        const fullResponse = await streamAIChatResponse(aiMessageContent);
-        
-        // Once streaming is complete, add the full response to history
-        chatHistory.push({ role: 'model', parts: [{ text: fullResponse }] });
-        
-        // Re-enable form
-        chatSubmitBtn.disabled = false;
-        chatInput.disabled = false;
-        chatInput.focus();
-    });
-
-    // --- (The chat helper functions like createMessageBubble, addMessageToUI, and streamAIChatResponse remain unchanged) ---
-    function createMessageBubble(sender, role) { /* ... same as before ... */ }
-    function addMessageToUI(sender, message, role) { /* ... same as before ... */ }
-    async function streamAIChatResponse(targetElement) { /* ... same as before ... */ }
-
-
-    // --- ATTACH EVENT LISTENERS ---
-    finishBtn.addEventListener('click', submitData);
-
-    // --- START THE EXPERIMENT ---
-    initializeExperiment();
-
-    // Paste the unchanged functions here
-    function createMessageBubble(sender, role) {
-        const messageContainer = document.createElement('div');
-        const senderEl = document.createElement('p');
-        const messageEl = document.createElement('div');
-
-        senderEl.className = 'font-bold text-sm mb-1';
-        senderEl.textContent = sender;
-        messageEl.className = 'chat-message-content';
-
-        if (role === 'user') {
-            messageContainer.className = 'p-3 bg-blue-100 text-blue-800 rounded-lg max-w-lg ml-auto';
-            senderEl.className += ' text-blue-900';
-        } else {
-            messageContainer.className = 'p-3 bg-indigo-100 text-indigo-800 rounded-lg max-w-lg';
-            senderEl.className += ' text-indigo-900';
-        }
-        
-        messageContainer.appendChild(senderEl);
-        messageContainer.appendChild(messageEl);
-        chatHistoryEl.appendChild(messageContainer);
-        
-        chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
-        return messageContainer;
-    }
-
-    function addMessageToUI(sender, message, role) {
-        const bubble = createMessageBubble(sender, role);
-        const content = bubble.querySelector('.chat-message-content');
-        // We now render markdown for user messages too, for consistency
-        content.innerHTML = marked.parse(message); 
-    }
-
-    async function streamAIChatResponse(targetElement) {
-        const payload = { contents: chatHistory };
-        let fullResponseText = '';
-
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                throw new Error(`API Error: ${response.status} ${await response.text()}`);
+            if (idFromQualtrics) {
+                participantId = idFromQualtrics;
+            } else {
+                console.warn("No Qualtrics ID found in URL. Generating a random ID for testing.");
+                participantId = `TEST_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
             }
-
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            let buffer = '';
             
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+            startTimestamp = new Date().toISOString();
+            console.log(`Experiment Started. Participant ID: ${participantId}`);
+        }
 
-                buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop(); 
+        // =================================================================
+        // DATA SUBMISSION LOGIC FOR PROLIFIC
+        // =================================================================
+        async function submitData() {
+            finishBtn.disabled = true;
+            finishBtn.textContent = 'Submitting...';
 
-                for (const line of lines) {
-                    if (line.trim().length === 0) continue;
-                    let jsonStr = line.trim();
+            const participantData = {
+                id: participantId,
+                startTimestamp: startTimestamp,
+                endTimestamp: new Date().toISOString(),
+                divergentTask: {
+                    prompt: "brick",
+                    responses: submittedWords
+                },
+                chatLog: chatHistory
+            };
 
-                    if (jsonStr.startsWith('data: ')) {
-                        jsonStr = jsonStr.substring(6);
-                    }
-                    
-                    if (jsonStr.startsWith('{')) {
-                        try {
-                            const parsed = JSON.parse(jsonStr);
-                            const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                            fullResponseText += text;
-                        } catch (e) {
-                            console.warn("Could not parse JSON chunk:", jsonStr);
+            const dataAsJson = JSON.stringify(participantData, null, 2);
+            const formData = new FormData();
+            formData.append('form-name', 'experiment-data');
+            formData.append('participantData', dataAsJson);
+
+            try {
+                await fetch('/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                alert("Submission successful! You will now be redirected back to Prolific.");
+                // IMPORTANT: Replace this URL with your actual Prolific completion URL!
+                window.location.href = 'https://app.prolific.com/submissions/complete?cc=YOUR_CODE_HERE';
+
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                alert('Sorry, there was an error submitting your data. Please contact the researcher.');
+                finishBtn.disabled = false;
+                finishBtn.textContent = 'Finish Experiment & Submit Data';
+            }
+        }
+
+        // --- DIVERGENT TASK LOGIC ---
+        wordForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const word = wordInput.value.trim();
+            if (word) {
+                submittedWords.push(word);
+                renderWordList();
+                wordInput.value = '';
+            }
+        });
+
+        function renderWordList() {
+            wordList.innerHTML = '';
+            submittedWords.forEach(word => {
+                const li = document.createElement('li');
+                li.textContent = word;
+                wordList.appendChild(li);
+            });
+        }
+
+        // --- CHAT LOGIC ---
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+
+            addMessageToUI('You', userMessage, 'user');
+            chatHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+            chatInput.value = '';
+            
+            chatSubmitBtn.disabled = true;
+            chatInput.disabled = true;
+
+            const aiMessageContainer = createMessageBubble('AI Assistant', 'model');
+            const aiMessageContent = aiMessageContainer.querySelector('.chat-message-content');
+            aiMessageContent.innerHTML = '<span class="animate-pulse">...</span>';
+
+            const fullResponse = await streamAIChatResponse(aiMessageContent);
+            
+            if (fullResponse) { // Only add to history if a response was received
+                chatHistory.push({ role: 'model', parts: [{ text: fullResponse }] });
+            }
+            
+            chatSubmitBtn.disabled = false;
+            chatInput.disabled = false;
+            chatInput.focus();
+        });
+
+        // --- CHAT HELPER FUNCTIONS ---
+        function createMessageBubble(sender, role) {
+            const messageContainer = document.createElement('div');
+            const senderEl = document.createElement('p');
+            const messageEl = document.createElement('div');
+
+            senderEl.className = 'font-bold text-sm mb-1';
+            senderEl.textContent = sender;
+            messageEl.className = 'chat-message-content';
+
+            if (role === 'user') {
+                messageContainer.className = 'p-3 bg-blue-100 text-blue-800 rounded-lg max-w-lg ml-auto';
+                senderEl.className += ' text-blue-900';
+            } else {
+                messageContainer.className = 'p-3 bg-indigo-100 text-indigo-800 rounded-lg max-w-lg';
+                senderEl.className += ' text-indigo-900';
+            }
+            
+            messageContainer.appendChild(senderEl);
+            messageContainer.appendChild(messageEl);
+            chatHistoryEl.appendChild(messageContainer);
+            
+            chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+            return messageContainer;
+        }
+
+        function addMessageToUI(sender, message, role) {
+            const bubble = createMessageBubble(sender, role);
+            const content = bubble.querySelector('.chat-message-content');
+            content.innerHTML = marked.parse(message);
+        }
+
+        async function streamAIChatResponse(targetElement) {
+            const payload = { contents: chatHistory };
+            let fullResponseText = '';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status} ${await response.text()}`);
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.trim().startsWith('data: ')) {
+                            const jsonStr = line.trim().substring(6);
+                            if (jsonStr) {
+                                try {
+                                    const parsed = JSON.parse(jsonStr);
+                                    const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                                    fullResponseText += text;
+                                } catch (e) {
+                                    // Ignore JSON parsing errors for incomplete chunks
+                                }
+                            }
                         }
                     }
+                    targetElement.innerHTML = marked.parse(fullResponseText);
+                    chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
                 }
-                targetElement.innerHTML = marked.parse(fullResponseText);
-                chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
+            } catch (error) {
+                console.error("Streaming failed:", error);
+                targetElement.innerHTML = `<p class="text-red-600">Sorry, an error occurred. Please check the console for details.</p>`;
             }
-        } catch (error) {
-            console.error("Streaming failed:", error);
-            targetElement.innerHTML = `<p class="text-red-600">Sorry, an error occurred. Please check the console for details.</p>`;
+            return fullResponseText;
         }
-        return fullResponseText;
-    }
-</script>
+        
+        // --- ATTACH EVENT LISTENERS ---
+        finishBtn.addEventListener('click', submitData);
+
+        // --- START THE EXPERIMENT ---
+        initializeExperiment();
+    </script>
 </body>
 </html>
