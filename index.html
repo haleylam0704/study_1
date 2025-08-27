@@ -101,10 +101,9 @@
         const submittedWords = [];
         const chatHistory = []; // To store the conversation for context
 
-        // --- GEMINI API SETUP ---
-        const apiKey = ""; // Canvas will provide the key at runtime
-        // Switched to the streaming endpoint for faster perceived response
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?key=${apiKey}`;
+        // --- API SETUP ---
+        // This now points to our secure Netlify function instead of directly to Google.
+        const apiUrl = `/.netlify/functions/gemini`;
 
         // --- DIVERGENT TASK LOGIC ---
         wordForm.addEventListener('submit', (e) => {
@@ -203,7 +202,7 @@
         }
 
         /**
-         * Fetches and streams a chat response from the Gemini API.
+         * Fetches and streams a chat response from our Netlify function.
          * @param {HTMLElement} targetElement - The element to stream the response into.
          * @returns {Promise<string>} - A promise that resolves with the full response text.
          */
@@ -233,14 +232,23 @@
                     const lines = chunk.split('\n');
                     
                     for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const jsonStr = line.substring(6);
+                        // In a streaming response from Gemini via a proxy, the data might not have the 'data: ' prefix
+                        if (line.trim().startsWith('{')) {
+                            try {
+                                const parsed = JSON.parse(line.trim());
+                                const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                                fullResponseText += text;
+                            } catch (e) {
+                                // Ignore parsing errors for incomplete JSON chunks
+                            }
+                        } else if (line.startsWith('data: ')) { // Keep original logic just in case
+                             const jsonStr = line.substring(6);
                             try {
                                 const parsed = JSON.parse(jsonStr);
                                 const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
                                 fullResponseText += text;
                             } catch (e) {
-                                // Ignore parsing errors for incomplete JSON chunks
+                                // Ignore parsing errors
                             }
                         }
                     }
