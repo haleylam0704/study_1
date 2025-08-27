@@ -114,15 +114,25 @@
     // NEW: INITIALIZE THE EXPERIMENT ON PAGE LOAD
     // =================================================================
     function initializeExperiment() {
-        // 1. Generate a unique, anonymous ID for this participant session
-        participantId = `P_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        
-        // 2. Record the start time
-        startTimestamp = new Date().toISOString();
+    // 1. Look for an ID in the URL.
+    const urlParams = new URLSearchParams(window.location.search);
+    const idFromQualtrics = urlParams.get('id'); // 'id' matches the "?id=" in the URL
 
-        // 3. Log the ID to the console so the researcher knows who this is
-        console.log(`Experiment Started. Participant ID: ${participantId}`);
+    if (idFromQualtrics) {
+        // 2. If an ID from Qualtrics is found, use it.
+        participantId = idFromQualtrics;
+    } else {
+        // 3. If no ID is in the URL (e.g., for testing), create a random one.
+        console.warn("No Qualtrics ID found in URL. Generating a random ID for testing.");
+        participantId = `TEST_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     }
+    
+    // Record the start time
+    startTimestamp = new Date().toISOString();
+
+    // Log the final ID to the console for the researcher.
+    console.log(`Experiment Started. Participant ID: ${participantId}`);
+}
 
 
     // =================================================================
