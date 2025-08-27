@@ -218,47 +218,46 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
+                    throw new Error(`API Error: ${response.status} ${await response.text()}`);
                 }
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
+                let buffer = '';
                 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
 
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep the last, possibly incomplete, line for the next chunk
+
                     for (const line of lines) {
-                        // In a streaming response from Gemini via a proxy, the data might not have the 'data: ' prefix
-                        if (line.trim().startsWith('{')) {
-                            try {
-                                const parsed = JSON.parse(line.trim());
-                                const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                                fullResponseText += text;
-                            } catch (e) {
-                                // Ignore parsing errors for incomplete JSON chunks
-                            }
-                        } else if (line.startsWith('data: ')) { // Keep original logic just in case
-                             const jsonStr = line.substring(6);
+                        if (line.trim().length === 0) continue;
+                        let jsonStr = line.trim();
+
+                        if (jsonStr.startsWith('data: ')) {
+                            jsonStr = jsonStr.substring(6);
+                        }
+                        
+                        if (jsonStr.startsWith('{')) {
                             try {
                                 const parsed = JSON.parse(jsonStr);
                                 const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
                                 fullResponseText += text;
                             } catch (e) {
-                                // Ignore parsing errors
+                                // This chunk might be incomplete, it will be processed with the next one
+                                console.warn("Could not parse JSON chunk:", jsonStr);
                             }
                         }
                     }
-                    // Update the UI with the accumulated text, parsed as markdown
                     targetElement.innerHTML = marked.parse(fullResponseText);
                     chatHistoryEl.scrollTop = chatHistoryEl.scrollHeight;
                 }
             } catch (error) {
                 console.error("Streaming failed:", error);
-                targetElement.innerHTML = "Sorry, an error occurred. Please try again.";
+                targetElement.innerHTML = `<p class="text-red-600">Sorry, an error occurred. Please check the console for details.</p>`;
             }
             return fullResponseText;
         }
