@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+
 // This is the final, corrected version of the secure "middleman" function.
 // It uses a ReadableStream to ensure full compatibility with Netlify's streaming response requirements.
 
