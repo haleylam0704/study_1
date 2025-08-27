@@ -1,5 +1,5 @@
-// This is the updated secure "middleman" function.
-// It uses a more modern syntax (ESM) that Netlify prefers.
+// This is the final, corrected version of the secure "middleman" function.
+// It's specifically designed to handle streaming responses correctly on Netlify.
 
 export const handler = async (event) => {
   // Get the secret API key from the environment variables you set in Netlify
