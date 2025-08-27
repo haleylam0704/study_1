@@ -10,18 +10,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        body { font-family: 'Inter', sans-serif; }
         #chat-history::-webkit-scrollbar { width: 6px; }
         #chat-history::-webkit-scrollbar-track { background: #f1f5f9; }
         #chat-history::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        #chat-history::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .chat-message-content ul, .chat-message-content ol { padding-left: 1.25rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
-        .chat-message-content ul { list-style-type: disc; }
-        .chat-message-content ol { list-style-type: decimal; }
-        .chat-message-content p { margin-bottom: 0.5rem; }
-        .chat-message-content p:last-child { margin-bottom: 0; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
@@ -29,53 +22,70 @@
     <form name="experiment-data" netlify hidden>
         <input type="hidden" name="participantData" />
     </form>
-    <div class="flex flex-col md:flex-row w-full h-screen">
+    
+    <div id="start-page" class="flex flex-col items-center justify-center h-screen p-8">
+        <div class="bg-white p-10 rounded-lg shadow-lg text-center max-w-2xl">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Experiment Instructions</h1>
+            <p class="text-gray-700 mb-6 text-lg">
+                Welcome! In the first part of this study, you will have <strong>5 minutes</strong> to list as many different and creative uses for a <strong>brick</strong> as you can think of. In the second part, you will chat with an AI assistant.
+            </p>
+            <p class="text-gray-700 mb-8 text-lg">
+                Please click "Start" when you are ready to begin the 5-minute timer.
+            </p>
+            <button id="start-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-xl">
+                Start
+            </button>
+        </div>
+    </div>
 
+    <div id="experiment-interface" class="flex flex-col md:flex-row w-full h-screen hidden">
         <div class="w-full md:w-1/3 bg-white p-6 md:p-8 flex flex-col border-r border-gray-200">
+            <div id="timer-display" class="w-full text-center mb-4 p-3 bg-indigo-100 text-indigo-800 rounded-lg font-bold text-2xl">
+                05:00
+            </div>
+
             <div class="mb-6">
                 <h1 class="text-2xl font-bold text-gray-900">Divergent Thinking Task</h1>
-                <p class="mt-2 text-gray-600">Please name as many different uses for a <strong>brick</strong> as you can think of. Submit each idea one at a time.</p>
+                <p class="mt-2 text-gray-600">List as many different uses for a <strong>brick</strong> as you can.</p>
             </div>
             
             <form id="word-form" class="flex items-center gap-2 mb-4">
-                <input type="text" id="word-input" class="flex-grow p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter a single use...">
-                <button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-shadow shadow-sm">
-                    Submit
-                </button>
+                <input type="text" id="word-input" class="flex-grow p-2 border border-gray-300 rounded-lg" placeholder="Enter a single use...">
+                <button type="submit" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700">Submit</button>
             </form>
 
             <div class="flex-grow overflow-y-auto border-t border-gray-200 pt-4">
                 <h2 class="text-lg font-semibold mb-2">Your Submitted Ideas:</h2>
-                <ul id="word-list" class="list-disc list-inside space-y-1 text-gray-700">
-                    </ul>
+                <ul id="word-list" class="list-disc list-inside space-y-1 text-gray-700"></ul>
             </div>
 
             <div class="mt-auto pt-4">
-                <button id="finish-btn" class="w-full bg-red-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-shadow shadow-sm disabled:bg-gray-400">
+                <button id="finish-btn" class="w-full bg-red-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-red-700 disabled:bg-gray-400">
                     Finish Experiment & Submit Data
                 </button>
             </div>
         </div>
-
         <div class="w-full md:w-2/3 bg-gray-50 flex flex-col h-full p-6">
             <h1 class="text-2xl font-bold text-gray-900 mb-4 text-center md:text-left">AI Chat Assistant</h1>
             <div id="chat-history" class="flex-grow bg-white border border-gray-200 rounded-lg p-4 overflow-y-auto mb-4 space-y-4">
                 <div class="p-3 bg-indigo-100 text-indigo-800 rounded-lg max-w-lg">
                     <p class="font-bold text-sm">AI Assistant</p>
-                    <p>Hello! How can I help you today?</p>
+                    <p>Hello! Once the first task is complete, you can chat with me here.</p>
                 </div>
             </div>
             <form id="chat-form" class="flex items-center gap-2">
-                <input type="text" id="chat-input" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Type your message to the AI...">
-                <button type="submit" id="chat-submit-btn" class="bg-green-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-shadow shadow-sm disabled:bg-gray-400">
-                    Send
-                </button>
+                <input type="text" id="chat-input" class="flex-grow p-3 border border-gray-300 rounded-lg" placeholder="Type your message to the AI...">
+                <button type="submit" id="chat-submit-btn" class="bg-green-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-green-700 disabled:bg-gray-400">Send</button>
             </form>
         </div>
     </div>
 
     <script type="module">
         // --- UI ELEMENTS ---
+        const startPage = document.getElementById('start-page');
+        const startBtn = document.getElementById('start-btn');
+        const experimentInterface = document.getElementById('experiment-interface');
+        const timerDisplay = document.getElementById('timer-display');
         const wordForm = document.getElementById('word-form');
         const wordInput = document.getElementById('word-input');
         const wordList = document.getElementById('word-list');
@@ -85,37 +95,72 @@
         const chatSubmitBtn = document.getElementById('chat-submit-btn');
         const finishBtn = document.getElementById('finish-btn');
 
-        // --- STATE & DATA COLLECTION ---
+        // --- STATE & DATA ---
         let participantId = null;
         let startTimestamp = null;
         const submittedWords = [];
         const chatHistory = [];
+        let timerInterval = null;
+        let isSubmitted = false;
 
         // --- API SETUP ---
         const apiUrl = `/gemini`;
 
         // =================================================================
-        // INITIALIZE THE EXPERIMENT ON PAGE LOAD
+        // INITIALIZE & START EXPERIMENT
         // =================================================================
         function initializeExperiment() {
+            // Prolific passes participant IDs in the URL like "?PROLIFIC_PID=..."
             const urlParams = new URLSearchParams(window.location.search);
-            const idFromQualtrics = urlParams.get('id');
+            const prolificPID = urlParams.get('PROLIFIC_PID'); 
 
-            if (idFromQualtrics) {
-                participantId = idFromQualtrics;
+            if (prolificPID) {
+                participantId = prolificPID;
             } else {
-                console.warn("No Qualtrics ID found in URL. Generating a random ID for testing.");
-                participantId = `TEST_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+                console.warn("No Prolific ID found. Generating a random ID for testing.");
+                participantId = `TEST_${Date.now()}`;
             }
             
             startTimestamp = new Date().toISOString();
-            console.log(`Experiment Started. Participant ID: ${participantId}`);
+            console.log(`Experiment Initialized. Participant ID: ${participantId}`);
+        }
+
+        function startExperiment() {
+            startPage.classList.add('hidden');
+            experimentInterface.classList.remove('hidden');
+            startTimer(5 * 60); // 5 minutes
         }
 
         // =================================================================
-        // DATA SUBMISSION LOGIC FOR PROLIFIC
+        // TIMER LOGIC
+        // =================================================================
+        function startTimer(durationInSeconds) {
+            let timer = durationInSeconds;
+            timerInterval = setInterval(() => {
+                const minutes = Math.floor(timer / 60);
+                const seconds = timer % 60;
+                
+                timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "Time's Up!";
+                    wordInput.disabled = true; // Disable the divergent task input
+                    wordForm.querySelector('button').disabled = true;
+                    // Automatically submit data when timer ends
+                    submitData();
+                }
+            }, 1000);
+        }
+
+        // =================================================================
+        // DATA SUBMISSION LOGIC
         // =================================================================
         async function submitData() {
+            if (isSubmitted) return; // Prevent multiple submissions
+            isSubmitted = true;
+            clearInterval(timerInterval); // Stop the timer if they finish early
+
             finishBtn.disabled = true;
             finishBtn.textContent = 'Submitting...';
 
@@ -123,10 +168,7 @@
                 id: participantId,
                 startTimestamp: startTimestamp,
                 endTimestamp: new Date().toISOString(),
-                divergentTask: {
-                    prompt: "brick",
-                    responses: submittedWords
-                },
+                divergentTask: { prompt: "brick", responses: submittedWords },
                 chatLog: chatHistory
             };
 
@@ -136,13 +178,10 @@
             formData.append('participantData', dataAsJson);
 
             try {
-                await fetch('/', {
-                    method: 'POST',
-                    body: formData
-                });
+                await fetch('/', { method: 'POST', body: formData });
 
                 alert("Submission successful! You will now be redirected back to Prolific.");
-                // IMPORTANT: Replace this URL with your actual Prolific completion URL!
+                // IMPORTANT: Replace this with your actual Prolific completion URL!
                 window.location.href = 'https://app.prolific.com/submissions/complete?cc=YOUR_CODE_HERE';
 
             } catch (error) {
@@ -150,6 +189,7 @@
                 alert('Sorry, there was an error submitting your data. Please contact the researcher.');
                 finishBtn.disabled = false;
                 finishBtn.textContent = 'Finish Experiment & Submit Data';
+                isSubmitted = false; // Allow them to try again if it fails
             }
         }
 
@@ -159,21 +199,25 @@
             const word = wordInput.value.trim();
             if (word) {
                 submittedWords.push(word);
-                renderWordList();
+                wordList.innerHTML += `<li>${word}</li>`;
                 wordInput.value = '';
             }
         });
+        
+        // --- (All chat logic and helper functions remain the same) ---
+        chatForm.addEventListener('submit', async (e) => { /* ... same as before ... */ });
+        function createMessageBubble(sender, role) { /* ... same as before ... */ }
+        function addMessageToUI(sender, message, role) { /* ... same as before ... */ }
+        async function streamAIChatResponse(targetElement) { /* ... same as before ... */ }
 
-        function renderWordList() {
-            wordList.innerHTML = '';
-            submittedWords.forEach(word => {
-                const li = document.createElement('li');
-                li.textContent = word;
-                wordList.appendChild(li);
-            });
-        }
+        // --- ATTACH EVENT LISTENERS ---
+        startBtn.addEventListener('click', startExperiment);
+        finishBtn.addEventListener('click', submitData);
 
-        // --- CHAT LOGIC ---
+        // --- INITIALIZE SCRIPT ---
+        initializeExperiment();
+
+        // --- PASTE UNCHANGED FUNCTIONS HERE ---
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const userMessage = chatInput.value.trim();
@@ -192,7 +236,7 @@
 
             const fullResponse = await streamAIChatResponse(aiMessageContent);
             
-            if (fullResponse) { // Only add to history if a response was received
+            if (fullResponse) {
                 chatHistory.push({ role: 'model', parts: [{ text: fullResponse }] });
             }
             
@@ -201,7 +245,6 @@
             chatInput.focus();
         });
 
-        // --- CHAT HELPER FUNCTIONS ---
         function createMessageBubble(sender, role) {
             const messageContainer = document.createElement('div');
             const senderEl = document.createElement('p');
@@ -213,10 +256,8 @@
 
             if (role === 'user') {
                 messageContainer.className = 'p-3 bg-blue-100 text-blue-800 rounded-lg max-w-lg ml-auto';
-                senderEl.className += ' text-blue-900';
             } else {
                 messageContainer.className = 'p-3 bg-indigo-100 text-indigo-800 rounded-lg max-w-lg';
-                senderEl.className += ' text-indigo-900';
             }
             
             messageContainer.appendChild(senderEl);
@@ -254,7 +295,6 @@
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-
                     const chunk = decoder.decode(value, { stream: true });
                     const lines = chunk.split('\n');
 
@@ -266,9 +306,7 @@
                                     const parsed = JSON.parse(jsonStr);
                                     const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text || '';
                                     fullResponseText += text;
-                                } catch (e) {
-                                    // Ignore JSON parsing errors for incomplete chunks
-                                }
+                                } catch (e) {}
                             }
                         }
                     }
@@ -277,16 +315,10 @@
                 }
             } catch (error) {
                 console.error("Streaming failed:", error);
-                targetElement.innerHTML = `<p class="text-red-600">Sorry, an error occurred. Please check the console for details.</p>`;
+                targetElement.innerHTML = `<p class="text-red-600">Sorry, an error occurred.</p>`;
             }
             return fullResponseText;
         }
-        
-        // --- ATTACH EVENT LISTENERS ---
-        finishBtn.addEventListener('click', submitData);
-
-        // --- START THE EXPERIMENT ---
-        initializeExperiment();
     </script>
 </body>
 </html>
