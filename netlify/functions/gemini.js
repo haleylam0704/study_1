@@ -5,8 +5,8 @@ export const handler = async (event) => {
   // Get the secret API key from the environment variables you set in Netlify
   const apiKey = process.env.GEMINI_API_KEY;
   
-  // The real Gemini API endpoint for streaming
-  const geminiApiUrl = `https://generativelace.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?key=${apiKey}`;
+  // The real Gemini API endpoint for streaming - CORRECTED URL
+  const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:streamGenerateContent?key=${apiKey}`;
 
   try {
     // Forward the user's request (the chat history) to the real Gemini API
