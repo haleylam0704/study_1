@@ -3,7 +3,7 @@
 export default async (request, context) => {
   // Get the secret API key from environment variables
   const apiKey = Deno.env.get("GEMINI_API_KEY");
-  const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:streamGenerateContent?key=${apiKey}&alt=sse`;
+  const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-latest:streamGenerateContent?key=${apiKey}&alt=sse`;
 
   try {
     // Get the user's chat history from the incoming request body
